@@ -3,16 +3,16 @@ worker_processes {{ nginx_worker_processes }};
 error_log /var/log/nginx/error.log warn;
 pid /var/run/nginx.pid;
 
-{% if nginx_hide_version %}
-# Hide nginx version
-server_tokens off;
-{% endif %}
-
 events {
     worker_connections {{ nginx_worker_connections }};
 }
 
 http {
+{% if nginx_hide_version %}
+    # Hide nginx version
+    server_tokens off;
+{% endif %}
+
     include /etc/nginx/mime.types;
     default_type application/octet-stream;
 
