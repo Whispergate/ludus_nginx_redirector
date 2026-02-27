@@ -44,7 +44,7 @@ http {
     gzip on;
     gzip_vary on;
     gzip_min_length 1024;
-    gzip_level {{ gzip_level }};
+    gzip_comp_level {{ gzip_level }};
     gzip_types {{ gzip_types }};
 {% endif %}
 
