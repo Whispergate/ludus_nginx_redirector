@@ -108,6 +108,28 @@
   when: not enable_rate_limiting
   notify: reload nginx
 
+- name: Deploy Default Landing Page
+  block:
+    - name: Determine nginx web root
+      ansible.builtin.set_fact:
+        nginx_webroot: "{{ '/usr/share/nginx/html' if ansible_os_family == 'RedHat' else '/var/www/html' }}"
+
+    - name: Create web root directory
+      ansible.builtin.file:
+        path: "{{ nginx_webroot }}"
+        state: directory
+        owner: "{{ nginx_user }}"
+        group: "{{ nginx_user }}"
+        mode: '0755'
+
+    - name: Deploy index.html
+      ansible.builtin.copy:
+        src: 'index.html'
+        dest: "{{ nginx_webroot }}/index.html"
+        owner: "{{ nginx_user }}"
+        group: "{{ nginx_user }}"
+        mode: '0644'
+
 - name: Validate Nginx Configuration
   ansible.builtin.command:
     cmd: 'nginx -t'

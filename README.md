@@ -13,10 +13,12 @@ Although many operators prefer Apache2 with mod_rewrite, Nginx provides superior
 - [Security Considerations](#security-considerations)
 - [Troubleshooting](#troubleshooting)
 
-## Features
+## 🚀 Features
 
 - **Installs and configures Nginx** with full SSL/TLS support
 - **Malleable redirector logic** via custom location blocks and routing rules
+- **Professional landing page** - Realistic financial services SPA for OPSEC
+- **Rate limiting** to defend against detection/DDoS
 - **Custom upstream proxying** with health checks and failover
 - **Dynamic header manipulation** for C2 traffic blending
 - **Gzip compression** support for bandwidth optimization
@@ -47,9 +49,36 @@ If you want to **customize the Nginx configuration templates** or **static files
   - `ludus_nginx_redirector/templates/c2_vhost.conf.j2` - Virtual host config
   - `ludus_nginx_redirector/templates/rate_limit.conf.j2` - Rate limiting config
 
+- **Landing page** (deployed to web root):
+  - `ludus_nginx_redirector/files/index.html` - Professional financial services SPA
+
 Edit these files as needed, then run your playbook. Your custom templates will be deployed to the target server.
 
-## Usage
+### Default Landing Page
+
+The role automatically deploys a professional-looking **Pinnacle Financial Solutions** Single Page Application (SPA) as the default landing page. This provides operational security benefits:
+
+- **OPSEC**: Presents a legitimate business front when accessed by analysts/scanners
+- **Realistic Design**: Professional financial services website with contact info, services, and company details
+- **Responsive**: Mobile-friendly design that looks genuine across all devices
+- **Low Suspicion**: Appears as a normal business website, reducing operational risk
+
+**Key Features of the Landing Page:**
+- Portfolio management and wealth advisory services
+- Professional contact information and office details
+- Interactive UI with smooth scrolling and animations
+- Financial industry disclaimers and regulatory information
+- Social media links and company branding
+
+**To customize the landing page**, replace `files/index.html` with your own HTML file before deploying the role. You can create any type of front:
+- E-commerce site
+- Corporate website  
+- Blog/news site
+- SaaS product landing page
+
+The page is automatically deployed to the nginx web root (`/usr/share/nginx/html` on RedHat or `/var/www/html` on Debian).
+
+## 🚀 Usage
 
 ### Example Ludus Configuration
 
