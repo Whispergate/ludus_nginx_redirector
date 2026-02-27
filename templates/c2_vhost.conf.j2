@@ -42,7 +42,7 @@ server {
 {% if custom_locations %}
     # Custom Locations
 {% for location in custom_locations %}
-    location {{ location.path }} {
+    location {% if location.path_regex is defined %}~ {{ location.path_regex }}{% else %}{{ location.path }}{% endif %} {
 {% if location.return_code is defined %}
         return {{ location.return_code }};
 {% elif location.upstream is defined %}
