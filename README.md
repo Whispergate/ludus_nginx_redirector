@@ -13,12 +13,10 @@ Although many operators prefer Apache2 with mod_rewrite, Nginx provides superior
 - [Security Considerations](#security-considerations)
 - [Troubleshooting](#troubleshooting)
 
-## 🚀 Features
+## Features
 
 - **Installs and configures Nginx** with full SSL/TLS support
 - **Malleable redirector logic** via custom location blocks and routing rules
-- **Professional landing page** - Realistic financial services SPA for OPSEC
-- **Rate limiting** to defend against detection/DDoS
 - **Custom upstream proxying** with health checks and failover
 - **Dynamic header manipulation** for C2 traffic blending
 - **Gzip compression** support for bandwidth optimization
@@ -78,7 +76,7 @@ The role automatically deploys a professional-looking **Pinnacle Financial Solut
 
 The page is automatically deployed to the nginx web root (`/usr/share/nginx/html` on RedHat or `/var/www/html` on Debian).
 
-## 🚀 Usage
+## Usage
 
 ### Example Ludus Configuration
 
