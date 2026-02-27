@@ -9,7 +9,7 @@ server {
     # SSL/TLS Configuration
     listen 443 ssl;
     ssl_certificate {{ ssl_certificate_path }};
-    ssl_key {{ ssl_key_path }};
+    ssl_certificate_key {{ ssl_key_path }};
     ssl_protocols {{ ssl_protocols }};
     ssl_ciphers {{ ssl_ciphers }};
     ssl_prefer_server_ciphers {{ ssl_prefer_server_ciphers }};
