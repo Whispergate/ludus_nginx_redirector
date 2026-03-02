@@ -167,6 +167,7 @@ All variables are defined in `defaults/main.yml` and can be overridden in your L
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `nginx_install_from_repository` | `true` | Install Nginx from OS repositories |
+| `nginx_apt_update_cache` | `true` | Run apt cache update during Debian/Ubuntu Nginx install |
 | `nginx_remove_default_vhost` | `true` | Remove default Nginx virtual host |
 | `nginx_user` | `localuser` | User that Nginx worker processes run as |
 | `nginx_worker_processes` | `auto` | Number of worker processes (auto = CPU count) |

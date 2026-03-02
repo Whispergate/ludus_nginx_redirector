@@ -1,6 +1,7 @@
 ---
 # Nginx Installation
 nginx_install_from_repository: true
+nginx_apt_update_cache: false
 nginx_remove_default_vhost: true
 
 # Service Configuration
