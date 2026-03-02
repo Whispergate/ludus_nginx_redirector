@@ -52,11 +52,6 @@ http {
     {{ option }}
 {% endfor %}
 
-{% if enable_rate_limiting %}
-    # Rate limiting
-    limit_req_zone $binary_remote_addr zone={{ rate_limit_zone }}:10m rate={{ rate_limit_requests }};
-{% endif %}
-
     # Include additional configurations
     include /etc/nginx/conf.d/*.conf;
 }
