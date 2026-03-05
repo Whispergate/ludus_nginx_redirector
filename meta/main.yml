@@ -1,0 +1,32 @@
+---
+dependencies: []
+
+galaxy_info:
+  role_name: ludus_nginx_redirector
+  author: 'Whispergate'
+  description: 'Nginx C2 Redirector for Ludus'
+  company: 'Whispergate'
+  license: 'BSD 2-Clause'
+  min_ansible_version: "2.10"
+  platforms:
+    - name: EL
+      versions:
+        - "8"
+        - "9"
+    - name: Ubuntu
+      versions:
+        - "bionic"
+        - "focal"
+        - "jammy"
+        - "kinetic"
+    - name: Debian
+      versions:
+        - "buster"
+        - "bullseye"
+        - "bookworm"
+  galaxy_tags:
+    - c2
+    - redirector
+    - nginx
+    - proxy
+    - infrastructure

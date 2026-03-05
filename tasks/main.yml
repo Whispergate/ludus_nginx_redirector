@@ -1,0 +1,197 @@
+---
+- name: Install Nginx
+  block:
+    - name: Install Nginx on RedHat/CentOS
+      ansible.builtin.yum:
+        name: nginx
+        state: present
+      when:
+        - ansible_os_family == 'RedHat'
+        - nginx_install_from_repository
+
+    - name: Install Nginx on Debian/Ubuntu
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: "{{ nginx_apt_update_cache }}"
+      when:
+        - ansible_os_family == 'Debian'
+        - nginx_install_from_repository
+
+- name: Create SSL Directory
+  ansible.builtin.file:
+    path: '/etc/nginx/ssl'
+    state: directory
+    mode: '0755'
+  when: enable_ssl
+
+- name: Generate Self-Signed Certificate (if SSL enabled and no cert exists)
+  ansible.builtin.command:
+    cmd: openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout {{ ssl_key_path }} -out {{ ssl_certificate_path }} -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
+    creates: "{{ ssl_certificate_path }}"
+  when:
+    - enable_ssl
+    - ssl_certificate_path is defined
+    - ssl_key_path is defined
+
+- name: Configure Nginx
+  block:
+    - name: Create nginx directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop:
+        - '/etc/nginx/conf.d'
+        - '/etc/nginx/sites-available'
+        - '/etc/nginx/sites-enabled'
+        - '/var/log/nginx'
+
+    - name: Deploy main nginx configuration
+      ansible.builtin.template:
+        src: 'nginx.conf.j2'
+        dest: '/etc/nginx/nginx.conf'
+        backup: yes
+        owner: root
+        group: root
+        mode: '0644'
+      notify: reload nginx
+
+    - name: Deploy C2 redirector upstream configuration
+      ansible.builtin.template:
+        src: 'c2_upstream.conf.j2'
+        dest: '/etc/nginx/conf.d/c2_upstream.conf'
+        backup: yes
+        owner: root
+        group: root
+        mode: '0644'
+      notify: reload nginx
+
+    - name: Deploy C2 redirector vhost configuration
+      ansible.builtin.template:
+        src: 'c2_vhost.conf.j2'
+        dest: '/etc/nginx/conf.d/c2_vhost.conf'
+        backup: yes
+        owner: root
+        group: root
+        mode: '0644'
+      notify: reload nginx
+
+    - name: Remove default nginx configuration
+      ansible.builtin.file:
+        path: '/etc/nginx/conf.d/default.conf'
+        state: absent
+      when: nginx_remove_default_vhost
+      notify: reload nginx
+
+    - name: Create rate limiting configuration
+      ansible.builtin.template:
+        src: 'rate_limit.conf.j2'
+        dest: '/etc/nginx/conf.d/rate_limit.conf'
+        backup: yes
+        owner: root
+        group: root
+        mode: '0644'
+      when: enable_rate_limiting
+      notify: reload nginx
+
+- name: Remove rate limiting if disabled
+  ansible.builtin.file:
+    path: '/etc/nginx/conf.d/rate_limit.conf'
+    state: absent
+  when: not enable_rate_limiting
+  notify: reload nginx
+
+- name: Deploy Default Landing Page
+  block:
+    - name: Determine nginx web root
+      ansible.builtin.set_fact:
+        nginx_webroot: "{{ '/usr/share/nginx/html' if ansible_os_family == 'RedHat' else '/var/www/html' }}"
+
+    - name: Create web root directory
+      ansible.builtin.file:
+        path: "{{ nginx_webroot }}"
+        state: directory
+        owner: "{{ nginx_user }}"
+        group: "{{ nginx_user }}"
+        mode: '0755'
+
+    - name: Deploy index.html
+      ansible.builtin.copy:
+        src: 'index.html'
+        dest: "{{ nginx_webroot }}/index.html"
+        owner: "{{ nginx_user }}"
+        group: "{{ nginx_user }}"
+        mode: '0644'
+
+- name: Validate Nginx Configuration
+  ansible.builtin.command:
+    cmd: 'nginx -t'
+  register: nginx_test
+  changed_when: false
+  failed_when: nginx_test.rc != 0
+
+- name: Start and Enable Nginx
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Configure Firewall (FirewallD)
+  block:
+    - name: Open HTTP port
+      ansible.posix.firewalld:
+        service: http
+        permanent: yes
+        state: enabled
+        immediate: yes
+      when: ansible_os_family == 'RedHat'
+
+    - name: Open HTTPS port
+      ansible.posix.firewalld:
+        service: https
+        permanent: yes
+        state: enabled
+        immediate: yes
+      when:
+        - ansible_os_family == 'RedHat'
+        - enable_ssl
+
+    - name: Open custom ports
+      ansible.posix.firewalld:
+        port: "{{ item.split(':')[1] }}/tcp"
+        permanent: yes
+        state: enabled
+        immediate: yes
+      loop: "{{ nginx_vhosts | map(attribute='listen') | list }}"
+      when: ansible_os_family == 'RedHat'
+  ignore_errors: true
+
+- name: Configure UFW (Debian/Ubuntu)
+  block:
+    - name: Allow HTTP through UFW
+      community.general.ufw:
+        rule: allow
+        port: '80'
+        proto: tcp
+      when: ansible_os_family == 'Debian'
+
+    - name: Allow HTTPS through UFW
+      community.general.ufw:
+        rule: allow
+        port: '443'
+        proto: tcp
+      when:
+        - ansible_os_family == 'Debian'
+        - enable_ssl
+  ignore_errors: true
+
+- name: Display Configuration Info
+  ansible.builtin.debug:
+    msg:
+      - "Nginx C2 Redirector configured successfully"
+      - "Upstream: {{ c2_upstream_servers }}"
+      - "Listening on: {{ nginx_vhosts | map(attribute='listen') | list }}"
+      - "SSL Enabled: {{ enable_ssl }}"

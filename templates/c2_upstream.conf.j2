@@ -1,0 +1,10 @@
+upstream {{ c2_upstream_name }} {
+{% for server in c2_upstream_servers %}
+    server {{ server.address }}{% if server.weight is defined and server.weight != 1 %} weight={{ server.weight }}{% endif %}{% if server.max_fails is defined %} max_fails={{ server.max_fails }}{% endif %}{% if server.fail_timeout is defined %} fail_timeout={{ server.fail_timeout }}{% endif %};
+{% endfor %}
+
+    # Connection pooling
+    keepalive 32;
+    keepalive_requests 100;
+    keepalive_timeout 60s;
+}

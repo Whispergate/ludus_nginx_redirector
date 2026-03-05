@@ -1,0 +1,79 @@
+server {
+    listen {{ nginx_vhosts[0].listen }};
+    server_name {{ nginx_vhosts[0].server_name }};
+
+    access_log {{ nginx_vhosts[0].access_log }};
+    error_log {{ nginx_vhosts[0].error_log }};
+
+{% if enable_ssl %}
+    # SSL/TLS Configuration
+    listen 443 ssl;
+    ssl_certificate {{ ssl_certificate_path }};
+    ssl_certificate_key {{ ssl_key_path }};
+    ssl_protocols {{ ssl_protocols }};
+    ssl_ciphers {{ ssl_ciphers }};
+    ssl_prefer_server_ciphers {{ ssl_prefer_server_ciphers }};
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    # Redirect HTTP to HTTPS
+    if ($scheme != "https") {
+        return 301 https://$server_name$request_uri;
+    }
+{% endif %}
+
+{% if response_headers %}
+    # Custom Response Headers
+{% for header, value in response_headers.items() %}
+    add_header {{ header }} "{{ value }}" always;
+{% endfor %}
+{% endif %}
+
+{% if enable_rate_limiting %}
+    # Rate limiting
+    limit_req zone={{ rate_limit_zone }} burst={{ rate_limit_burst }} nodelay;
+{% endif %}
+
+{% if custom_locations %}
+    # Custom Locations
+{% for location in custom_locations %}
+    location {% if location.path_regex is defined %}~ {{ location.path_regex }}{% else %}{{ location.path }}{% endif %} {
+{% if location.return_code is defined %}
+        return {{ location.return_code }};
+{% elif location.upstream is defined %}
+        proxy_pass {{ location.proxy_pass | default('http://' ~ location.upstream) }};
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+{% for header, value in nginx_proxy_set_headers.items() %}
+        proxy_set_header {{ header }} "{{ value }}";
+{% endfor %}
+{% endif %}
+    }
+{% endfor %}
+{% endif %}
+
+    # Default location - proxy to C2 backend
+    location / {
+        proxy_pass {{ upstream_routes[0].proxy_pass }};
+        proxy_http_version 1.1;
+        
+        # Connection pooling
+        proxy_set_header Connection "";
+        
+        # Proxy headers
+{% for header, value in nginx_proxy_set_headers.items() %}
+        proxy_set_header {{ header }} "{{ value }}";
+{% endfor %}
+
+        # Timeouts
+        proxy_connect_timeout {{ nginx_connect_timeout }}s;
+        proxy_send_timeout {{ nginx_send_timeout }}s;
+        proxy_read_timeout {{ nginx_read_timeout }}s;
+
+        # Buffering
+        proxy_buffering {{ nginx_proxy_buffering }};
+
+        # Cookie handling
+        proxy_cookie_path / /;
+    }
+}

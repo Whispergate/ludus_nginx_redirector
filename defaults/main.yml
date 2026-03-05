@@ -1,0 +1,116 @@
+---
+# Nginx Installation
+nginx_install_from_repository: true
+nginx_apt_update_cache: false
+nginx_remove_default_vhost: true
+
+# Service Configuration
+nginx_user: 'localuser'
+nginx_worker_processes: 'auto'
+nginx_worker_connections: 768
+nginx_keepalive_timeout: 65
+
+# Upstream C2 Server Configuration
+c2_upstream_name: 'c2_backend'
+c2_upstream_servers:
+  - address: 'localhost:8080'
+    weight: 1
+    max_fails: 3
+    fail_timeout: 30s
+
+# Virtual Host Configuration
+nginx_vhosts:
+  - name: 'c2_redirector'
+    listen: '80'
+    server_name: '_'
+    access_log: '/var/log/nginx/c2_access.log'
+    error_log: '/var/log/nginx/c2_error.log'
+    use_default_location: false
+
+# Timeouts (in seconds)
+nginx_connect_timeout: 60
+nginx_send_timeout: 60
+nginx_read_timeout: 60
+nginx_proxy_buffering: 'off'
+
+# Proxy Headers Configuration
+nginx_proxy_set_headers:
+  'X-Real-IP': '$remote_addr'
+  'X-Forwarded-For': '$proxy_add_x_forwarded_for'
+  'X-Forwarded-Proto': '$scheme'
+  'X-Forwarded-Host': '$server_name'
+
+# Log Configuration
+nginx_access_log_format: 'main'
+nginx_log_format_main: |
+  '$remote_addr - $remote_user [$time_local] "$request" '
+  '$status $body_bytes_sent "$http_referer" '
+  '"$http_user_agent" "$http_x_forwarded_for"'
+
+# Rate Limiting (optional)
+enable_rate_limiting: false
+rate_limit_zone: 'one'
+rate_limit_requests: '10r/s'
+rate_limit_burst: 20
+
+# SSL/TLS Configuration (optional)
+enable_ssl: false
+ssl_certificate_path: '/etc/nginx/ssl/cert.pem'
+ssl_key_path: '/etc/nginx/ssl/key.pem'
+ssl_protocols: 'TLSv1.2 TLSv1.3'
+ssl_ciphers: 'HIGH:!aNULL:!MD5'
+ssl_prefer_server_ciphers: 'on'
+
+# Upstream Path Routing
+upstream_routes:
+  - path: '/'
+    upstream: '{{ c2_upstream_name }}'
+    proxy_pass: 'http://{{ c2_upstream_name }}'
+
+# Custom Locations (for malleable redirector logic)
+custom_locations: []
+# Example:
+# custom_locations:
+#   - path: '/admin'
+#     return_code: 404
+#   - path: '/analytics'
+#     upstream: 'c2_backend'
+
+# Nginx Modules to Install
+nginx_modules: []
+# Example:
+# nginx_modules:
+#   - name: 'ngx_http_geoip_module'
+
+# Hide Nginx Version
+nginx_hide_version: true
+
+# Gzip Compression
+enable_gzip: true
+gzip_level: 6
+gzip_types: 'text/plain text/css text/xml text/javascript application/json application/xml+rss application/javascript application/x-javascript'
+
+# Connection Settings
+client_max_body_size: '50m'
+client_body_timeout: '12'
+client_header_timeout: '12'
+
+# DNS Resolution (for upstream)
+resolver: '8.8.8.8 8.8.4.4'
+resolver_timeout: '5s'
+
+# Additional Nginx Configuration
+nginx_http_additional_options: []
+# Example:
+# nginx_http_additional_options:
+#   - 'proxy_cache_path /var/cache/nginx levels=1:2 keys_zone=api_cache:10m;'
+
+# Enable Request Body Inspection
+enable_body_inspection: false
+
+# Custom Response Headers
+response_headers: {}
+# Example:
+# response_headers:
+#   'X-Content-Type-Options': 'nosniff'
+#   'X-Frame-Options': 'SAMEORIGIN'
