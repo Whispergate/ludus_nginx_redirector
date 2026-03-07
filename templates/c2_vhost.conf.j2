@@ -52,28 +52,27 @@ server {
 {% endfor %}
 {% endif %}
 
-    # Default location - proxy to C2 backend
+    # Serve local decoy first, proxy unknown URIs (C2 traffic) to backend
     location / {
+        root {% if ansible_os_family == 'RedHat' %}/usr/share/nginx/html{% else %}/var/www/html{% endif %};
+        index index.html;
+        try_files $uri $uri/ @c2_proxy;
+    }
+
+    # Named location for C2 backend proxying
+    location @c2_proxy {
         proxy_pass {{ upstream_routes[0].proxy_pass }};
         proxy_http_version 1.1;
-        
-        # Connection pooling
         proxy_set_header Connection "";
         
-        # Proxy headers
 {% for header, value in nginx_proxy_set_headers.items() %}
         proxy_set_header {{ header }} "{{ value }}";
 {% endfor %}
 
-        # Timeouts
         proxy_connect_timeout {{ nginx_connect_timeout }}s;
         proxy_send_timeout {{ nginx_send_timeout }}s;
         proxy_read_timeout {{ nginx_read_timeout }}s;
-
-        # Buffering
         proxy_buffering {{ nginx_proxy_buffering }};
-
-        # Cookie handling
         proxy_cookie_path / /;
     }
 }
