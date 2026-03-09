@@ -1,0 +1,37 @@
+---
+namespace: whispergate
+name: ludus_nginx_redirector
+version: 1.0.0
+author: "Whispergate"
+description: "Nginx C2 Redirector for Ludus"
+license: "BSD-2-Clause"
+min_ansible_version: "2.10"
+readme: README.md
+
+platforms:
+  - name: EL
+    versions:
+      - "8"
+      - "9"
+  - name: Ubuntu
+    versions:
+      - bionic
+      - focal
+      - jammy
+      - kinetic
+  - name: Debian
+    versions:
+      - buster
+      - bullseye
+      - bookworm
+
+tags:
+  - c2
+  - redirector
+  - nginx
+  - proxy
+  - infrastructure
+
+dependencies: {}
+
+repository: "https://github.com/Whispergate/ludus_nginx_redirector"
